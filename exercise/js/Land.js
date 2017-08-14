@@ -1,0 +1,22 @@
+//创建构造函数
+function Land(info){
+    this.x=info.x;
+    this.y=info.y;
+    this.canvas=info.canvas;
+    this.ctx=info.ctx;
+    this.image=info.image;
+    this.speed=-2;
+}
+//将方法封装到原型中
+Land.prototype={
+    constructor:Land,
+    draw:function(){
+        //每次执行代码的时候确认x的坐标
+        this.x+=this.speed;
+        //判断是否有超出屏幕
+        if(this.x<=-this.image.width){
+            this.x=this.canvas.width;
+        }
+        this.ctx.drawImage(this.image,this.x,this.canvas.height-this.image.height,this.image.width,this.image.height)
+    }
+}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="800" height="600"></canvas>
+</body>
+
+</html>
+<script src="./js/Sky.js"></script>
+<script src="./js/Land.js"></script>
+<script src="./js/Pipe.js"></script>
+<script src="./js/Bird.js"></script>
+<script>
+    //获取元素
+    var canvas = document.querySelector("canvas");
+    //创建画笔
+    var ctx = canvas.getContext("2d");
+
+    //创建一个图片名字数组
+    var imageNames=["sky","land","pipe1","pipe2","birds"];
+    //创建一个对象，保存所有的图片资源
+    var imagesObj={};
+
+    //设置一个计数器
+    var count=0;
+    //遍历图片名字数组
+    imageNames.forEach(function(imageName){
+        //创建一个图片对象
+        var image = new Image();
+        //给创建出来的图片对象设置路径
+        image.src="../img/"+imageName+".png";
+        //将图像对象放到对象中
+        imagesObj[imageName]=image;
+
+        //当图片全部加载完成之后再执行后面的逻辑
+        image.onload=function(){
+            //每执行一次计数器加1
+            count++;
+            //判断图片是否全部加载完成
+            if(count==imageNames.length){
+                //创建所有角色
+                createRoles();
+            }
+        }
+    });
+
+    //创建一个角色对象数组
+    var rolesArr = new Array();
+    var startTime;
+    //封装创建所有角色的方法
+    function createRoles(){
+        //创建两个天空对象
+        for(var i=0;i<2;i++){
+            //创建一个Sky对象的实例化对象并传参
+            var sky= new Sky({
+                x:i*canvas.width,
+                canvas:canvas,
+                ctx:ctx,
+                image:imagesObj["sky"]
+            })
+            //把创建出来的两个天空对象放到角色数组中
+            rolesArr.push(sky);
+        }
+
+        //创建五个陆地对象
+        for(var i=0;i<5;i++){
+            var land = new Land({
+                x:i*canvas.width/4,
+                y:canvas.height-imagesObj['land'].height,
+                canvas:canvas,
+                ctx:ctx,
+                image:imagesObj["land"]
+            });
+
+            //将陆地对象添加到角色数组中
+            rolesArr.push(land);
+        }
+
+        //创建六个管道对象
+        var pipeWidth =imagesObj["pipe1"].width;
+        var gap = (canvas.width-6*pipeWidth)/5;
+
+        for(var i=0;i<6;i++){
+            //创建管道
+            var pipe = new Pipe({
+                x:300+(pipeWidth+gap)*i,
+                bottomy:imagesObj["land"].height,
+                canvas:canvas,
+                ctx:ctx,
+                topImage:imagesObj["pipe2"],
+                bottomImage:imagesObj["pipe1"],
+                gap:gap
+            })
+
+            //将管道加入到角色数组中
+            rolesArr.push(pipe);
+        }
+
+        //创建小鸟
+        var bird=new Bird({
+            x:100,
+            y:100,
+            ctx:ctx,
+            image:imagesObj["birds"]
+        })
+
+        //追加到角色数组中
+        rolesArr.push(bird);
+        //在执行动画之前获取当前时间
+        startTime = new Date();
+        //执行动画
+        action();
+
+        //点击画布时，给小鸟一个向上的加速度
+        canvas.addEventListener("click",function(){
+            bird.speed=-0.2;
+        });
+    }
+
+    //封装动画方法
+    function action(){
+        //使用画布之前先清空画布
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        //遍历角色数组，让各个角色去完成自己应该完成的动画
+        ctx.beginPath();
+        rolesArr.forEach(function(role){
+            role.draw();
+        })
+
+        //绘制统计文字
+        //统计时间
+        var currentTime =new Date();
+        //得到运行时间的秒数
+        var totalTime =Math.floor((currentTime-startTime)/1000);
+        //得到小时数
+        var h = Math.floor(totalTime/3600);
+        //得到分数
+        var m = Math.floor(totalTime/60)%60;
+        //得到秒数
+        var s =totalTime%60;
+
+        //绘制文字
+        var text ="您坚持了"+h+"小时"+m+"分"+s+"秒";
+        //保存画笔
+        ctx.save();
+        ctx.font="30px 微软雅黑";
+        ctx.fillStyle="skyblue";
+        ctx.textBaseline="top";
+        //计算文本的宽度
+        var textWidth = ctx.measureText(text).width;
+        //画文字
+        ctx.fillText(text,canvas.width-10-textWidth,10);
+        ctx.restore();
+
+        //判断小鸟是否死亡
+        //获取小鸟
+        var bird =rolesArr[rolesArr.length-1];
+        //如果小鸟掉在地上，就死了
+        if(bird.y>=canvas.height-imagesObj["land"].height-imagesObj["birds"].height){
+            return;
+        }
+        //判断小鸟是否撞到了柱子
+        if(ctx.isPointInPath(bird.x+imagesObj['birds'].width/3/2,bird.y+imagesObj["birds"].height/2)){
+            return;
+        }
+        //添加动画
+        window.requestAnimationFrame(action);
+    }
+</script>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas width="800" height="600"></canvas>
+</body>
+
+</html>
+<script src="./js/Sky.js"></script>
+<script>
+    //获取元素
+    var canvas = document.querySelector("canvas");
+    //创建画笔
+    var ctx = canvas.getContext("2d");
+
+    //创建一个图片名字数组
+    var imageNames=["sky","land","pipe1","pipe2","birds"];
+    //创建一个对象，保存所有的图片资源
+    var imagesObj={};
+
+    //设置一个计数器
+    var count=0;
+    //遍历图片名字数组
+    imageNames.forEach(function(imageName){
+        //创建一个图片对象
+        var image = new Image();
+        //给创建出来的图片对象设置路径
+        image.src="../img/"+imageName+".png";
+        //将图像对象放到对象中
+        imagesObj[imageName]=image;
+
+        //当图片全部加载完成之后再执行后面的逻辑
+        image.onload=function(){
+            //每执行一次计数器加1
+            count++;
+            //判断图片是否全部加载完成
+            if(count==imageNames.length){
+                //创建所有角色
+                createRoles();
+            }
+        }
+    });
+
+    //创建一个角色对象数组
+    var rolesArr = new Array();
+
+    //封装创建所有角色的方法
+    function createRoles(){
+        //创建两个天空对象
+        for(var i=0;i<2;i++){
+            //创建一个Sky对象的实例化对象并传参
+            var sky= new Sky({
+                x:i*canvas.width,
+                canvas:canvas,
+                ctx:ctx,
+                image:imagesObj["sky"]
+            });
+            //把创建出来的两个天空对象放到角色数组中
+            rolesArr.push(sky);
+        }
+
+        //执行动画
+        action();
+    }
+
+    //封装动画方法
+    function action(){
+        //使用画布之前先清空画布
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        //遍历角色数组，让各个角色去完成自己应该完成的动画
+        rolesArr.forEach(function(role){
+            role.draw();
+        })
+
+        //添加动画
+        window.requestAnimationFrame(action);
+    }
+</script>
